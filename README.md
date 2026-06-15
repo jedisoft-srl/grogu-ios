@@ -14,17 +14,198 @@ In Xcode: *File ▸ Add Package Dependencies…* oppure nel `Package.swift`:
 
 ## Uso
 
+### Configurazione base
+
+Configura l'SDK una sola volta all'avvio dell'app. La chiamata è idempotente:
+eventuali chiamate successive vengono ignorate.
+
 ```swift
 import AppleAttribution
 
-// All'avvio dell'app
 AppleAttribution.configure(apiKey: "jedisoft_live_xxx")
+```
 
-// Eventi
+Esempio con SwiftUI:
+
+```swift
+import SwiftUI
+import AppleAttribution
+
+@main
+struct MyApp: App {
+    init() {
+        AppleAttribution.configure(apiKey: "jedisoft_live_xxx")
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+```
+
+Esempio con `AppDelegate`:
+
+```swift
+import UIKit
+import AppleAttribution
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        AppleAttribution.configure(apiKey: "jedisoft_live_xxx")
+        return true
+    }
+}
+```
+
+### Configurazione avanzata
+
+Puoi cambiare endpoint, logging e comportamento della coda.
+
+```swift
+import Foundation
+import AppleAttribution
+
+let options = AppleAttributionOptions(
+    logging: .info,
+    flushAt: 10,
+    flushIntervalSeconds: 15,
+    maxQueueSize: 500
+)
+
+AppleAttribution.configure(
+    apiKey: "jedisoft_live_xxx",
+    endpoint: URL(string: "https://collect.jedisoft.app")!,
+    options: options
+)
+```
+
+Livelli di log disponibili:
+
+```swift
+AppleAttributionOptions(logging: .none)
+AppleAttributionOptions(logging: .error)
+AppleAttributionOptions(logging: .info)
+AppleAttributionOptions(logging: .debug)
+```
+
+### Eventi supportati
+
+Puoi chiamare `track` dopo `configure`. Se `track` viene chiamato prima della
+configurazione, non fa nulla e non causa crash.
+
+#### Signup
+
+```swift
 AppleAttribution.track(.signup)
-AppleAttribution.track(.trialStarted(plan: .init(period: .monthly, hadTrial: true, productId: "pro.monthly")))
-AppleAttribution.track(.subscribed(plan: .init(period: .monthly, hadTrial: true, productId: "pro.monthly"),
-                                   revenue: 9.99, currency: "EUR"))
+```
+
+#### Login
+
+```swift
+AppleAttribution.track(.login)
+```
+
+#### Trial iniziato
+
+```swift
+let plan = SubscriptionPlan(
+    period: .monthly,
+    hadTrial: true,
+    productId: "pro.monthly"
+)
+
+AppleAttribution.track(.trialStarted(plan: plan))
+```
+
+#### Abbonamento acquistato
+
+```swift
+let plan = SubscriptionPlan(
+    period: .monthly,
+    hadTrial: true,
+    productId: "pro.monthly"
+)
+
+AppleAttribution.track(
+    .subscribed(
+        plan: plan,
+        revenue: 9.99,
+        currency: "EUR"
+    )
+)
+```
+
+#### Abbonamento rinnovato
+
+```swift
+let plan = SubscriptionPlan(
+    period: .annual,
+    hadTrial: false,
+    productId: "pro.annual"
+)
+
+AppleAttribution.track(
+    .renewed(
+        plan: plan,
+        revenue: 79.99,
+        currency: "EUR"
+    )
+)
+```
+
+#### Acquisto singolo
+
+Con `productId`:
+
+```swift
+AppleAttribution.track(
+    .purchase(
+        revenue: 4.99,
+        currency: "EUR",
+        productId: "credits.100"
+    )
+)
+```
+
+Senza `productId`:
+
+```swift
+AppleAttribution.track(
+    .purchase(
+        revenue: 4.99,
+        currency: "EUR",
+        productId: nil
+    )
+)
+```
+
+### Periodi abbonamento
+
+`SubscriptionPlan.Period` supporta:
+
+```swift
+SubscriptionPlan(period: .weekly, hadTrial: true, productId: "pro.weekly")
+SubscriptionPlan(period: .monthly, hadTrial: true, productId: "pro.monthly")
+SubscriptionPlan(period: .annual, hadTrial: false, productId: "pro.annual")
+```
+
+### Esempio completo
+
+```swift
+import AppleAttribution
+
+let monthlyPlan = SubscriptionPlan(
+    period: .monthly,
+    hadTrial: true,
+    productId: "pro.monthly"
+)
+
+AppleAttribution.track(.signup)
+AppleAttribution.track(.trialStarted(plan: monthlyPlan))
+AppleAttribution.track(.subscribed(plan: monthlyPlan, revenue: 9.99, currency: "EUR"))
 ```
 
 ## Privacy
