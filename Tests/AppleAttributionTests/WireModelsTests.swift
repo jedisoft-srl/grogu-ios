@@ -52,7 +52,7 @@ final class WireModelsTests: XCTestCase {
     }
 
     func test_attributionPayload_emitsNullTokenFieldsWhenAbsent() throws {
-        let device = DeviceContext(bundleId: "eu.jedisoft.app", appVersion: "1.0", sdkVersion: "0.1.0",
+        let device = DeviceContext(bundleId: "it.jedisoft.app", appVersion: "1.0", sdkVersion: "0.1.0",
                                    os: "iOS", osVersion: "17.5", locale: "it_IT", region: "IT")
         let p = AttributionPayload(installId: "I1", attributionToken: nil, tokenError: nil,
                                    device: device, capturedAt: "2026-06-04T10:00:00Z")

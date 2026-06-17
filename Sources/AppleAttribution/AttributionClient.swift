@@ -15,7 +15,7 @@ final class AttributionClient {
     private let now: () -> Date
     private var timer: DispatchSourceTimer?
     private var lifecycleObservers: [NSObjectProtocol] = []
-    private let backgroundQueue = DispatchQueue(label: "eu.jedisoft.attribution.background")
+    private let backgroundQueue = DispatchQueue(label: "it.jedisoft.attribution.background")
 
     init(config: Configuration,
          identity: InstallIdentity,
@@ -24,7 +24,7 @@ final class AttributionClient {
          provider: AttributionTokenProviding?,
          http: HTTPClient,
          now: @escaping () -> Date = Date.init,
-         uploaderQueue: DispatchQueue = DispatchQueue(label: "eu.jedisoft.attribution.uploader", qos: .utility)) {
+         uploaderQueue: DispatchQueue = DispatchQueue(label: "it.jedisoft.attribution.uploader", qos: .utility)) {
         self.config = config
         self.store = store
         self.device = device
@@ -56,9 +56,9 @@ final class AttributionClient {
         observeLifecycle()
     }
 
-    func track(_ event: AttributionEvent) {
+    func track(_ event: AttributionEvent, externalId: String? = nil) {
         let record = EventRecord.make(from: event, id: UUID().uuidString,
-                                      occurredAt: ISO8601.string(now()))
+                                      occurredAt: ISO8601.string(now()), externalId: externalId)
         store.append(record)
         if store.count >= config.options.flushAt {
             uploader.flush()

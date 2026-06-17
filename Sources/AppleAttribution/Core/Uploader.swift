@@ -23,7 +23,7 @@ final class Uploader {
     init(config: Configuration, store: EventStore, http: HTTPClient,
          identity: InstallIdentity, device: DeviceContext, logger: Logger,
          now: @escaping () -> Date = Date.init,
-         queue: DispatchQueue = DispatchQueue(label: "eu.jedisoft.attribution.uploader", qos: .utility)) {
+         queue: DispatchQueue = DispatchQueue(label: "it.jedisoft.attribution.uploader", qos: .utility)) {
         self.config = config
         self.store = store
         self.http = http

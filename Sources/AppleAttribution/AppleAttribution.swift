@@ -2,7 +2,7 @@ import Foundation
 
 /// API pubblica dell'SDK. Configurare una volta all'avvio dell'app; poi chiamare `track`.
 public enum AppleAttribution {
-    public static let version = "0.1.0"
+    public static let version = "0.1.1"
 
     private static let lock = NSLock()
     private static var client: AttributionClient?
@@ -10,7 +10,7 @@ public enum AppleAttribution {
     /// Inizializza l'SDK. Idempotente: chiamate successive sono ignorate.
     /// L'attribuzione viene catturata automaticamente.
     public static func configure(apiKey: String,
-                                 endpoint: URL = URL(string: "https://collect.jedisoft.app")!,
+                                 endpoint: URL = URL(string: "https://collect.grogu.jedisoft.it")!,
                                  options: AppleAttributionOptions = .default) {
         lock.lock()
         guard client == nil else { lock.unlock(); return }
@@ -27,9 +27,10 @@ public enum AppleAttribution {
     }
 
     /// Registra un evento predefinito. No-op se `configure` non è stato chiamato.
-    public static func track(_ event: AttributionEvent) {
+    /// - Parameter externalId: identificatore utente lato app (opzionale), serializzato come `external_id`.
+    public static func track(_ event: AttributionEvent, externalId: String? = nil) {
         lock.lock(); let c = client; lock.unlock()
-        c?.track(event)
+        c?.track(event, externalId: externalId)
     }
 
     /// Solo per i test: azzera lo stato della facade.

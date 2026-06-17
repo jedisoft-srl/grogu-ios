@@ -15,7 +15,7 @@ final class DeviceContextTests: XCTestCase {
     }
 
     func test_deviceContext_isCodableRoundTrip() throws {
-        let ctx = DeviceContext(bundleId: "eu.jedisoft.app", appVersion: "1.4.2",
+        let ctx = DeviceContext(bundleId: "it.jedisoft.app", appVersion: "1.4.2",
                                 sdkVersion: "0.1.0", os: "iOS", osVersion: "17.5",
                                 locale: "it_IT", region: "IT")
         let data = try JSONEncoder().encode(ctx)

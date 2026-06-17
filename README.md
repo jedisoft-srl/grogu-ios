@@ -77,7 +77,7 @@ let options = AppleAttributionOptions(
 
 AppleAttribution.configure(
     apiKey: "jedisoft_live_xxx",
-    endpoint: URL(string: "https://collect.jedisoft.app")!,
+    endpoint: URL(string: "https://collect.grogu.jedisoft.it")!,
     options: options
 )
 ```
@@ -182,6 +182,32 @@ AppleAttribution.track(
 )
 ```
 
+### Identificatore utente (`external_id`)
+
+Ogni chiamata a `track` accetta un parametro opzionale `externalId`: il tuo
+identificatore utente lato app. Viene serializzato sul wire come `external_id`
+e omesso quando `nil` (default), quindi è retrocompatibile. Serve a collegare gli
+eventi attribuiti a un utente nei tuoi sistemi.
+
+```swift
+AppleAttribution.track(.signup, externalId: "user_42")
+
+AppleAttribution.track(
+    .subscribed(
+        plan: SubscriptionPlan(period: .monthly, hadTrial: true, productId: "pro.monthly"),
+        revenue: 9.99,
+        currency: "EUR"
+    ),
+    externalId: "user_42"
+)
+```
+
+Senza `externalId` il comportamento è invariato:
+
+```swift
+AppleAttribution.track(.signup)
+```
+
 ### Periodi abbonamento
 
 `SubscriptionPlan.Period` supporta:
@@ -203,9 +229,11 @@ let monthlyPlan = SubscriptionPlan(
     productId: "pro.monthly"
 )
 
-AppleAttribution.track(.signup)
-AppleAttribution.track(.trialStarted(plan: monthlyPlan))
-AppleAttribution.track(.subscribed(plan: monthlyPlan, revenue: 9.99, currency: "EUR"))
+let userId = "user_42"
+
+AppleAttribution.track(.signup, externalId: userId)
+AppleAttribution.track(.trialStarted(plan: monthlyPlan), externalId: userId)
+AppleAttribution.track(.subscribed(plan: monthlyPlan, revenue: 9.99, currency: "EUR"), externalId: userId)
 ```
 
 ## Privacy

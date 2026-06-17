@@ -9,36 +9,50 @@ struct EventRecord: Codable, Equatable {
     var plan: PlanWire?
     var revenue: RevenueWire?
     var productId: String?    // solo per purchase
+    var externalId: String?   // identificatore utente lato app (opzionale)
 
-    static func make(from event: AttributionEvent, id: String, occurredAt: String) -> EventRecord {
+    enum CodingKeys: String, CodingKey {
+        case eventId, name, occurredAt, plan, revenue, productId
+        case externalId = "external_id"
+    }
+
+    static func make(from event: AttributionEvent, id: String, occurredAt: String,
+                     externalId: String? = nil) -> EventRecord {
         switch event {
         case .signup:
-            return EventRecord(eventId: id, name: "signup", occurredAt: occurredAt)
+            return EventRecord(eventId: id, name: "signup", occurredAt: occurredAt,
+                               externalId: externalId)
         case .login:
-            return EventRecord(eventId: id, name: "login", occurredAt: occurredAt)
+            return EventRecord(eventId: id, name: "login", occurredAt: occurredAt,
+                               externalId: externalId)
         case .trialStarted(let plan):
             return EventRecord(eventId: id, name: "trial_started", occurredAt: occurredAt,
-                               plan: PlanWire(plan))
+                               plan: PlanWire(plan), externalId: externalId)
         case .subscribed(let plan, let revenue, let currency):
             return EventRecord(eventId: id, name: "subscribed", occurredAt: occurredAt,
-                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency))
+                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
+                               externalId: externalId)
         case .renewed(let plan, let revenue, let currency):
             return EventRecord(eventId: id, name: "renewed", occurredAt: occurredAt,
-                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency))
+                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
+                               externalId: externalId)
         case .purchase(let revenue, let currency, let productId):
             return EventRecord(eventId: id, name: "purchase", occurredAt: occurredAt,
-                               revenue: RevenueWire(revenue, currency), productId: productId)
+                               revenue: RevenueWire(revenue, currency), productId: productId,
+                               externalId: externalId)
         }
     }
 
     init(eventId: String, name: String, occurredAt: String,
-         plan: PlanWire? = nil, revenue: RevenueWire? = nil, productId: String? = nil) {
+         plan: PlanWire? = nil, revenue: RevenueWire? = nil, productId: String? = nil,
+         externalId: String? = nil) {
         self.eventId = eventId
         self.name = name
         self.occurredAt = occurredAt
         self.plan = plan
         self.revenue = revenue
         self.productId = productId
+        self.externalId = externalId
     }
 }
 

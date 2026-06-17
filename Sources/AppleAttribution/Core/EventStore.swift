@@ -9,8 +9,8 @@ final class EventStore {
     private let eventsURL: URL
     private let attributionURL: URL
     private let maxQueueSize: Int
-    private let lock = DispatchQueue(label: "eu.jedisoft.attribution.store", qos: .utility)
-    private let ioQueue = DispatchQueue(label: "eu.jedisoft.attribution.store.io", qos: .utility)
+    private let lock = DispatchQueue(label: "it.jedisoft.attribution.store", qos: .utility)
+    private let ioQueue = DispatchQueue(label: "it.jedisoft.attribution.store.io", qos: .utility)
 
     private var events: [EventRecord]
     private var attribution: AttributionPayload?
