@@ -236,6 +236,31 @@ AppleAttribution.track(.trialStarted(plan: monthlyPlan), externalId: userId)
 AppleAttribution.track(.subscribed(plan: monthlyPlan, revenue: 9.99, currency: "EUR"), externalId: userId)
 ```
 
+### Attribuzione degli eventi server-side (rinnovi, conversioni trial→pagante)
+
+I rinnovi e la conversione trial→abbonato avvengono lato Apple **ad app chiusa**:
+l'SDK non li vede. Per attribuirli, passa l'`installId` dell'SDK come
+`appAccountToken` dell'acquisto StoreKit 2 — Apple lo rieccheggia nelle transazioni
+e nelle App Store Server Notifications, così il backend ricollega quegli eventi alla
+stessa installazione (e quindi a campagna/keyword).
+
+```swift
+import StoreKit
+import AppleAttribution
+
+func buy(_ product: Product) async throws {
+    var options: Set<Product.PurchaseOption> = []
+    if let id = AppleAttribution.installId, let token = UUID(uuidString: id) {
+        options.insert(.appAccountToken(token))   // = installId (è già un UUID)
+    }
+    let result = try await product.purchase(options: options)
+    // ... gestisci result
+}
+```
+
+Impostalo all'acquisto iniziale (trial/subscribe): Apple lo eredita su **tutti i
+rinnovi successivi**. `installId` è `nil` finché non chiami `configure`.
+
 ## Privacy
 Nessun IDFA, nessun prompt ATT. Identificatore anonimo per-installazione.
 Manifest privacy incluso (`PrivacyInfo.xcprivacy`).

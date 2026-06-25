@@ -28,6 +28,18 @@ final class AttributionClientTests: XCTestCase {
         XCTAssertTrue(http.requests.contains { $0.url?.path == "/v1/attribution" })
     }
 
+    func test_exposesInstallId() throws {
+        let http = MockHTTPClient()
+        let (client, _) = try makeClient(http: http, flushAt: 20)
+        // makeClient injects an InstallIdentity stubbed to "INSTALL-1".
+        XCTAssertEqual(client.installId, "INSTALL-1")
+    }
+
+    func test_facadeInstallIdNilBeforeConfigure() {
+        AppleAttribution.reset()
+        XCTAssertNil(AppleAttribution.installId)
+    }
+
     func test_track_flushesWhenThresholdReached() throws {
         let http = MockHTTPClient()
         let (client, q) = try makeClient(http: http, flushAt: 2)

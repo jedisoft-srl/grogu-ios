@@ -8,6 +8,10 @@ import UIKit
 final class AttributionClient {
     private let config: Configuration
     private let store: EventStore
+    /// Identificatore anonimo per-installazione (UUID), esposto pubblicamente via
+    /// `AppleAttribution.installId` per essere passato come `appAccountToken` agli
+    /// acquisti StoreKit 2 (chiave di join per gli eventi server-side di Apple).
+    let installId: String
     private let collector: AttributionCollector
     private let uploader: Uploader
     private let device: DeviceContext
@@ -27,6 +31,7 @@ final class AttributionClient {
          uploaderQueue: DispatchQueue = DispatchQueue(label: "it.jedisoft.attribution.uploader", qos: .utility)) {
         self.config = config
         self.store = store
+        self.installId = identity.installId
         self.device = device
         self.now = now
         let logger = Logger(level: config.options.logging)

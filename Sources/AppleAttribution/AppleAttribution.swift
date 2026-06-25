@@ -2,10 +2,27 @@ import Foundation
 
 /// API pubblica dell'SDK. Configurare una volta all'avvio dell'app; poi chiamare `track`.
 public enum AppleAttribution {
-    public static let version = "0.1.1"
+    public static let version = "0.2.0"
 
     private static let lock = NSLock()
     private static var client: AttributionClient?
+
+    /// Identificatore anonimo per-installazione (UUID), chiave di join tra
+    /// attribuzione ed eventi. È `nil` finché `configure` non è stato chiamato.
+    ///
+    /// Passalo come `appAccountToken` all'acquisto StoreKit 2 affinché Apple lo
+    /// rieccheggi nelle transazioni e nelle App Store Server Notifications: così
+    /// rinnovi e conversioni che avvengono lato Apple (app chiusa) si attribuiscono
+    /// alla stessa installazione. Es.:
+    /// ```swift
+    /// if let id = AppleAttribution.installId, let token = UUID(uuidString: id) {
+    ///     try await product.purchase(options: [.appAccountToken(token)])
+    /// }
+    /// ```
+    public static var installId: String? {
+        lock.lock(); let c = client; lock.unlock()
+        return c?.installId
+    }
 
     /// Inizializza l'SDK. Idempotente: chiamate successive sono ignorate.
     /// L'attribuzione viene catturata automaticamente.
