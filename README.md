@@ -9,7 +9,7 @@ al backend per lo scambio del token e l'aggregazione.
 ### Swift Package Manager
 In Xcode: *File ▸ Add Package Dependencies…* oppure nel `Package.swift`:
 ```swift
-.package(url: "https://github.com/jedisoft-srl/grogu-ios.git", from: "0.1.0")
+.package(url: "https://github.com/jedisoft-srl/grogu-ios.git", from: "0.2.0")
 ```
 
 ## Uso
