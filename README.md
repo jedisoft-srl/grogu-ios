@@ -9,7 +9,7 @@ al backend per lo scambio del token e l'aggregazione.
 ### Swift Package Manager
 In Xcode: *File ▸ Add Package Dependencies…* oppure nel `Package.swift`:
 ```swift
-.package(url: "https://github.com/jedisoft-srl/grogu-ios.git", from: "0.2.0")
+.package(url: "https://github.com/jedisoft-srl/grogu-ios.git", from: "0.3.0")
 ```
 
 ## Uso
@@ -261,9 +261,68 @@ func buy(_ product: Product) async throws {
 Impostalo all'acquisto iniziale (trial/subscribe): Apple lo eredita su **tutti i
 rinnovi successivi**. `installId` è `nil` finché non chiami `configure`.
 
+#### StoreKit 1 / SwiftyStoreKit (niente `appAccountToken`)
+
+`appAccountToken` esiste **solo in StoreKit 2**. Se usi **StoreKit 1** (es.
+**SwiftyStoreKit**) quel campo non c'è — e `SKPayment.applicationUsername` **non**
+viene rieccheggiato nelle notifiche server-side, quindi non serve come chiave di join.
+
+In questo caso passa l'`originalTransactionId` (chiave di join **B**): l'SDK lo invia
+con l'evento d'acquisto, il backend lo mappa all'installazione e, quando arriva l'App
+Store Server Notification, ricollega rinnovo/conversione alla stessa installazione (e
+quindi a campagna/keyword).
+
+```swift
+import SwiftyStoreKit
+import AppleAttribution
+
+SwiftyStoreKit.purchaseProduct("pro.monthly", quantity: 1, atomically: true) { result in
+    if case .success(let purchase) = result {
+        // Al primo acquisto del prodotto transactionIdentifier È l'originalTransactionId.
+        let txId = purchase.transaction.transactionIdentifier
+        AppleAttribution.track(
+            .subscribed(plan: .init(period: .monthly, hadTrial: true, productId: "pro.monthly"),
+                        revenue: 9.99, currency: "EUR"),
+            transaction: .init(originalTransactionId: txId, transactionId: txId))
+    }
+}
+```
+
+`purchase.transaction` (protocollo `PaymentTransaction`) espone solo
+`transactionIdentifier`: al **primo** acquisto coincide con l'`originalTransactionId`.
+Per ottenerlo in modo robusto anche su restore/rinnovi, leggilo dal receipt verificato
+(`SwiftyStoreKit.verifySubscription` → `ReceiptItem.originalTransactionId`) e passalo
+allo stesso modo. Imposta `transaction` almeno su `trialStarted`/`subscribed` (la
+primissima transazione): tanto basta a fissare la mappa per tutti i rinnovi futuri.
+
+Quando migrerai il client a StoreKit 2 potrai passare a `appAccountToken` (chiave A):
+il backend supporta **entrambe** le chiavi, nessun cambiamento lato server necessario.
+
 ## Privacy
 Nessun IDFA, nessun prompt ATT. Identificatore anonimo per-installazione.
-Manifest privacy incluso (`PrivacyInfo.xcprivacy`).
+Manifest privacy incluso (`PrivacyInfo.xcprivacy`, `NSPrivacyTracking = false`).
+
+### `appAccountToken` e conformità (leggere prima di integrare)
+Usare `installId` come `appAccountToken` (vedi sopra) **non viola le regole App Store
+e non richiede prompt utente**:
+- `appAccountToken` è pensato proprio per mappare la transazione a un account del *tuo*
+  sistema; l'unico vincolo è che sia un **UUID senza PII** — `installId` lo è.
+- **Niente ATT**: l'attribuzione usa AdServices (esente ATT by design) e l'`installId`
+  è anonimo, first-party, non condiviso con terzi. Collegare i *tuoi* acquisti alla
+  *tua* attribuzione non è "tracking" ai fini ATT (`NSPrivacyTracking` resta `false`).
+
+Restano però obblighi di **trasparenza** (non di consenso), a carico dell'app che integra:
+- dichiarare in **App Store Connect → App Privacy** la raccolta di Purchase History /
+  Product Interaction / Identifier (l'SDK fornisce il suo manifest; le label dell'app
+  finale le compili tu);
+- coprire attribuzione + dati d'acquisto nella **privacy policy**;
+- ⚠️ i dati sono dichiarati "non linked to identity": se la tua app raccoglie anche
+  account/email e il backend può fare join, potrebbe diventare "linked" → rivaluta le label.
+
+⚠️ **GDPR/ePrivacy (UE)** è un tema legale **separato** dalle policy Apple: un
+identificatore persistente + dati d'acquisto possono essere dati personali, con base
+giuridica (legittimo interesse vs **consenso**) che dipende dalla giurisdizione. Da
+verificare col proprio legale.
 
 ## Requisiti
 iOS 13+ (attribuzione AdServices attiva da iOS 14.3+).

@@ -51,6 +51,33 @@ final class WireModelsTests: XCTestCase {
             #"{"eventId":"E6","name":"renewed","occurredAt":"2026-06-04T10:00:00Z","plan":{"hadTrial":false,"period":"annual","productId":"pro.annual"},"revenue":{"amount":"49.99","currency":"EUR"}}"#)
     }
 
+    func test_event_withoutTransaction_omitsTransactionKeys() throws {
+        let r = EventRecord.make(from: .signup, id: "E1", occurredAt: "2026-06-04T10:00:00Z")
+        let s = try json(r)
+        XCTAssertFalse(s.contains("transactionId"), s)
+        XCTAssertFalse(s.contains("originalTransactionId"), s)
+    }
+
+    func test_subscribed_carriesOriginalTransactionId() throws {
+        let plan = SubscriptionPlan(period: .monthly, hadTrial: true, productId: "pro.monthly")
+        let r = EventRecord.make(from: .subscribed(plan: plan, revenue: 9.99, currency: "EUR"),
+                                 id: "E2", occurredAt: "2026-06-04T10:00:00Z",
+                                 transaction: PurchaseTransaction(originalTransactionId: "1000000999",
+                                                                  transactionId: "1000001000"))
+        XCTAssertEqual(try json(r),
+            #"{"eventId":"E2","name":"subscribed","occurredAt":"2026-06-04T10:00:00Z","originalTransactionId":"1000000999","plan":{"hadTrial":true,"period":"monthly","productId":"pro.monthly"},"revenue":{"amount":"9.99","currency":"EUR"},"transactionId":"1000001000"}"#)
+    }
+
+    func test_trialStarted_carriesOnlyOriginalTransactionId() throws {
+        let plan = SubscriptionPlan(period: .weekly, hadTrial: true, productId: "pro.weekly")
+        let r = EventRecord.make(from: .trialStarted(plan: plan), id: "E3",
+                                 occurredAt: "2026-06-04T10:00:00Z",
+                                 transaction: PurchaseTransaction(originalTransactionId: "1000000999"))
+        let s = try json(r)
+        XCTAssertTrue(s.contains(#""originalTransactionId":"1000000999""#), s)
+        XCTAssertFalse(s.contains("transactionId\""), s) // transactionId nil → omesso
+    }
+
     func test_attributionPayload_emitsNullTokenFieldsWhenAbsent() throws {
         let device = DeviceContext(bundleId: "it.jedisoft.app", appVersion: "1.0", sdkVersion: "0.1.0",
                                    os: "iOS", osVersion: "17.5", locale: "it_IT", region: "IT")

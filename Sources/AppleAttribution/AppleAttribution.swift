@@ -2,7 +2,7 @@ import Foundation
 
 /// API pubblica dell'SDK. Configurare una volta all'avvio dell'app; poi chiamare `track`.
 public enum AppleAttribution {
-    public static let version = "0.2.0"
+    public static let version = "0.3.0"
 
     private static let lock = NSLock()
     private static var client: AttributionClient?
@@ -44,10 +44,18 @@ public enum AppleAttribution {
     }
 
     /// Registra un evento predefinito. No-op se `configure` non è stato chiamato.
-    /// - Parameter externalId: identificatore utente lato app (opzionale), serializzato come `external_id`.
-    public static func track(_ event: AttributionEvent, externalId: String? = nil) {
+    /// - Parameters:
+    ///   - externalId: identificatore utente lato app (opzionale), serializzato come `external_id`.
+    ///   - transaction: identificatori della transazione StoreKit (opzionale). Per i
+    ///     tenant su **StoreKit 1 / SwiftyStoreKit** — dove `appAccountToken` non
+    ///     esiste — passa qui l'`originalTransactionId` dell'acquisto/trial: è la
+    ///     chiave con cui il backend ricollega rinnovi e conversioni server-side
+    ///     (App Store Server Notifications) alla stessa installazione. Su StoreKit 2
+    ///     usi invece `appAccountToken` (vedi `installId`) e questo è ridondante.
+    public static func track(_ event: AttributionEvent, externalId: String? = nil,
+                             transaction: PurchaseTransaction? = nil) {
         lock.lock(); let c = client; lock.unlock()
-        c?.track(event, externalId: externalId)
+        c?.track(event, externalId: externalId, transaction: transaction)
     }
 
     /// Solo per i test: azzera lo stato della facade.

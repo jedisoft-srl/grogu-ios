@@ -10,42 +10,51 @@ struct EventRecord: Codable, Equatable {
     var revenue: RevenueWire?
     var productId: String?    // solo per purchase
     var externalId: String?   // identificatore utente lato app (opzionale)
+    var transactionId: String?         // StoreKit transactionId (opzionale)
+    var originalTransactionId: String? // chiave di join B per gli eventi server-side
 
     enum CodingKeys: String, CodingKey {
         case eventId, name, occurredAt, plan, revenue, productId
         case externalId = "external_id"
+        case transactionId, originalTransactionId
     }
 
     static func make(from event: AttributionEvent, id: String, occurredAt: String,
-                     externalId: String? = nil) -> EventRecord {
+                     externalId: String? = nil,
+                     transaction: PurchaseTransaction? = nil) -> EventRecord {
+        var record: EventRecord
         switch event {
         case .signup:
-            return EventRecord(eventId: id, name: "signup", occurredAt: occurredAt,
-                               externalId: externalId)
+            record = EventRecord(eventId: id, name: "signup", occurredAt: occurredAt,
+                                 externalId: externalId)
         case .login:
-            return EventRecord(eventId: id, name: "login", occurredAt: occurredAt,
-                               externalId: externalId)
+            record = EventRecord(eventId: id, name: "login", occurredAt: occurredAt,
+                                 externalId: externalId)
         case .trialStarted(let plan):
-            return EventRecord(eventId: id, name: "trial_started", occurredAt: occurredAt,
-                               plan: PlanWire(plan), externalId: externalId)
+            record = EventRecord(eventId: id, name: "trial_started", occurredAt: occurredAt,
+                                 plan: PlanWire(plan), externalId: externalId)
         case .subscribed(let plan, let revenue, let currency):
-            return EventRecord(eventId: id, name: "subscribed", occurredAt: occurredAt,
-                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
-                               externalId: externalId)
+            record = EventRecord(eventId: id, name: "subscribed", occurredAt: occurredAt,
+                                 plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
+                                 externalId: externalId)
         case .renewed(let plan, let revenue, let currency):
-            return EventRecord(eventId: id, name: "renewed", occurredAt: occurredAt,
-                               plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
-                               externalId: externalId)
+            record = EventRecord(eventId: id, name: "renewed", occurredAt: occurredAt,
+                                 plan: PlanWire(plan), revenue: RevenueWire(revenue, currency),
+                                 externalId: externalId)
         case .purchase(let revenue, let currency, let productId):
-            return EventRecord(eventId: id, name: "purchase", occurredAt: occurredAt,
-                               revenue: RevenueWire(revenue, currency), productId: productId,
-                               externalId: externalId)
+            record = EventRecord(eventId: id, name: "purchase", occurredAt: occurredAt,
+                                 revenue: RevenueWire(revenue, currency), productId: productId,
+                                 externalId: externalId)
         }
+        record.transactionId = transaction?.transactionId
+        record.originalTransactionId = transaction?.originalTransactionId
+        return record
     }
 
     init(eventId: String, name: String, occurredAt: String,
          plan: PlanWire? = nil, revenue: RevenueWire? = nil, productId: String? = nil,
-         externalId: String? = nil) {
+         externalId: String? = nil, transactionId: String? = nil,
+         originalTransactionId: String? = nil) {
         self.eventId = eventId
         self.name = name
         self.occurredAt = occurredAt
@@ -53,6 +62,8 @@ struct EventRecord: Codable, Equatable {
         self.revenue = revenue
         self.productId = productId
         self.externalId = externalId
+        self.transactionId = transactionId
+        self.originalTransactionId = originalTransactionId
     }
 }
 

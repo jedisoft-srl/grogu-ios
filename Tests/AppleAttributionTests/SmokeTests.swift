@@ -3,7 +3,7 @@ import XCTest
 
 final class SmokeTests: XCTestCase {
     func test_version_isExposed() {
-        XCTAssertEqual(AppleAttribution.version, "0.2.0")
+        XCTAssertEqual(AppleAttribution.version, "0.3.0")
     }
 
     func test_trackBeforeConfigure_isNoOp() {

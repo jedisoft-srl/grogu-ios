@@ -61,9 +61,11 @@ final class AttributionClient {
         observeLifecycle()
     }
 
-    func track(_ event: AttributionEvent, externalId: String? = nil) {
+    func track(_ event: AttributionEvent, externalId: String? = nil,
+               transaction: PurchaseTransaction? = nil) {
         let record = EventRecord.make(from: event, id: UUID().uuidString,
-                                      occurredAt: ISO8601.string(now()), externalId: externalId)
+                                      occurredAt: ISO8601.string(now()), externalId: externalId,
+                                      transaction: transaction)
         store.append(record)
         if store.count >= config.options.flushAt {
             uploader.flush()
